@@ -1,0 +1,99 @@
+#!/bin/sh
+#Configuration du pare feu au demarrage.
+#Met enplace un fire wall et partage de connexion internet.
+#A déplacer dans : /etc/init.d/
+#chmod +x /etc/init.d/iptables
+#update-rc.d iptables start 99 2 .stop 00 2 0 1 6 .
+
+#Interface du reseau local
+Interface_Local=eth0
+#Interface du reseau d'acces à internet (livebox)
+Interface_Internet=eth1
+
+start() {
+
+#suppression des anciennes configurations éventuelles
+iptables -t filter -F
+#destruction chaines personnelles
+iptables -t filter -X
+
+#Strategie par defaut (tout est bloqué)
+iptables -t filter -P INPUT DROP
+iptables -t filter -P FORWARD DROP
+iptables -t filter -P OUTPUT DROP
+
+#init tables NAT et MANGLE (optionnel)
+#iptables -t nat -F
+#iptables -t nat -X
+#iptables -t nat -P PREROUTING ACCEPT
+#iptables -t nat -P POSTROUTING ACCEPT
+#iptables -t nat -P OUTPUT ACCEPT
+
+#iptables -t mangle -F
+#iptables -t mangle -X
+#iptables -t mangle -P PREROUTING ACCEPT
+#iptables -t mangle -P OUTPUT ACCEPT
+
+#Autorise les connexions locales
+iptables -t filter -A INPUT -i lo -s 127.0.0.0/8 -d 127.0.0.0/8 -j ACCEPT
+iptables -t filter -A OUTPUT -o lo -s 127.0.0.0/8 -d 127.0.0.0/8 -j ACCEPT
+
+#Autorise les comunications en reseau locale
+iptables -t filter -A OUTPUT -o $Interface_Local -s 172.16.0.0/16 -d 172.16.0.0/16 -j ACCEPT
+iptables -t filter -A INPUT -i $interface_Local -s 172.16.0.0/16 -d 172.16.0.0/16 -j ACCEPT
+
+#Autorise la communication vers/depuis l'exterieur
+iptables -t filter -A OUTPUT -o $Interface_Internet -s 192.168.1.0/24 -p tcp --dport 80 -j ACCEPT
+iptables -t filter -A OUTPUT -o $Interface_Internet -s 192.168.1.0/24 -p tcp --dport 443 -j ACCEPT
+
+iptables -t filter -A INPUT -i $Interface_Internet -d 192.168.1.0/24 -p tcp --sport 80 -j ACCEPT
+iptables -t filter -A INPUT -i $interface_Internet -d 192.168.1.0/24 -p tcp --sport 443 -j ACCEPT
+
+#PORT FORWARDING :
+#Acces du serveur web port 80 de UBUNTU-SERVER-LAN
+###iptables -t nat -A PREROUTING -i $interface -p tcp --dport 80 -j DNAT --to-destination 172.16.0.10:80
+###iptables -A FORWARD -p tcp -i $interface --dport 80 -j ACCEPT
+#squid
+###iptables -t nat -A PREROUTING -i $interface -p tcp --dport 80 -j REDIRECT --to-port 3128
+
+#Nouvelle regle
+#iptables -N USL
+
+#iptables -A USL -m state --state NEW ! -i $interfcae -j ACCEPT
+#iptables -A USL -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+#application de la regle
+#iptables -A INPUT -j USL
+#iptables -A FORWARD -j USL
+
+#partage de connecxion
+#echo 1 >/proc/sys/net/ipv4/ip_forward
+#iptables -t nat -A POSTROUTING -s 172.16.0.0/16 -o $interface -j MASQUERADE
+
+}
+
+stop() {
+
+echo "stop "
+#echo 0 >/proc/sys/net/ipv4/ip_forward
+#ifdown $interface
+
+}
+
+case "$1" in
+start)
+	start
+	;;
+
+stop)
+	stop
+	;;
+restart)
+	stop && start
+	;;
+*)
+	echo "Usage $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit 0
