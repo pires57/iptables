@@ -6,9 +6,9 @@
 #update-rc.d iptables start 99 2 .stop 00 2 0 1 6 .
 
 #Interface du reseau local
-Interface_Local=eth0
+Interface_Local=eth0;
 #Interface du reseau d'acces à internet (livebox)
-Interface_Internet=eth1
+Interface_Internet=eth1;
 
 start() {
 
