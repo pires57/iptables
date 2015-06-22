@@ -138,7 +138,7 @@ modprobe ip_conntrack_ftp
 modprobe ip_conntrack_irc
 
 echo "+ Règles pour Internet ($WAN_INTERFACE - $WAN_IP - $WAN_NETWORK)"
-iptables -t filter -A OUTPUT -o $WAN_INTERFACE -s $WAN_IP -d $WAN_NETWORK -p all -m state --state ! INVALID           -j ACCEPT
+iptables -t filter -A OUTPUT -o $WAN_INTERFACE -s $WAN_IP -d $WAN_NETWORK -p all -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
 iptables -t filter -A INPUT  -i $WAN_INTERFACE -s $WAN_NETWORK -d $WAN_IP -p all -m state --state RELATED,ESTABLISHED -j ACCEPT
 
 
@@ -152,7 +152,7 @@ if [ "$PF" == "1" ]; then
   modprobe iptable_nat
 
   echo "+ Autorise le port forwardong de $WAN_IP:$PF_PORT -> $PF_IP:$PF_PORT"
-  iptables -t filter -A FORWARD -i $WAN_INTERFACE -o $LAN_INTERFACE -s $WAN_NETWORK -d $LAN_NETWORK -p $PF_PROTO --dport $PF_PORT -m state --state ! INVALID           -j ACCEPT
+  iptables -t filter -A FORWARD -i $WAN_INTERFACE -o $LAN_INTERFACE -s $WAN_NETWORK -d $LAN_NETWORK -p $PF_PROTO --dport $PF_PORT -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
   iptables -t filter -A FORWARD -i $LAN_INTERFACE -o $WAN_INTERFACE -s $LAN_NETWORK -d $WAN_NETWORK -p $PF_PROTO --sport $PF_PORT -m state --state ESTABLISHED,RELATED -j ACCEPT
 
   iptables -t nat    -A PREROUTING                -i $WAN_INTERFACE -s $WAN_NETWORK -d $WAN_IP      -p $PF_PROTO --dport $PF_PORT -j DNAT --to-destination $PF_IP
@@ -180,7 +180,7 @@ if [ "$NAT" == "1" ]; then
   modprobe ip_nat_irc
 
   echo "+ Autorise l'IP masquerading de $LAN_NETWORK -> $WAN_NETWORK"
-  iptables -t filter -A FORWARD -i $LAN_INTERFACE -o $WAN_INTERFACE -s $LAN_NETWORK -d $WAN_NETWORK -p all -m state --state ! INVALID           -j ACCEPT
+  iptables -t filter -A FORWARD -i $LAN_INTERFACE -o $WAN_INTERFACE -s $LAN_NETWORK -d $WAN_NETWORK -p all -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
   iptables -t filter -A FORWARD -i $WAN_INTERFACE -o $LAN_INTERFACE -s $WAN_NETWORK -d $LAN_NETWORK -p all -m state --state ESTABLISHED,RELATED -j ACCEPT
 
   iptables -t nat    -A POSTROUTING               -o $WAN_INTERFACE -s $LAN_NETWORK -d $WAN_NETWORK -p all -j MASQUERADE
