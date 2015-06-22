@@ -25,7 +25,7 @@ LAN_BROADCAST=172.16.255.255   ; # Adresse de broadcast interne
 
 # Paramètrage de la connexion Internet (WAN = Wild Area Network = Réseau Large)
 WAN_INTERFACE=eth1            ; # Interface réseau externe (Internet)
-WAN_IP=192.168.1.1               ; # Adresse réseau externe (Internet)
+WAN_IP=192.168.1.50               ; # Adresse réseau externe (Internet)
 WAN_NETWORK=192.168.1.0/24        ; # Réseau externe (Internet)
 
 # REMARQUE:
