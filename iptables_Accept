@@ -1,0 +1,69 @@
+#!/bin/sh
+#
+###############################################################################
+# NOM: iptable-extrem-accept.sh
+#
+# COMMENTAIRE : Autorise toutes les connexions réseaux
+# 
+# Ce script fait partie du document :
+#        "Firewall et sécurité d'un réseau personnel sous Linux"
+#        http://olivieraj.free.fr/fr/linux/information/firewall/
+#
+# Auteur: Olivier ALLARD-JACQUIN (http://olivieraj.free.fr/)
+# Créé le: 2003/07/02                     Dernière modification le : 2003/07/19
+###############################################################################
+
+# Suppression de toutes les chaînes pré-définies de la table FILTER
+iptables -t filter -F
+
+# Suppression de toutes les chaînes utilisateur de la table FILTER
+iptables -t filter -X
+
+# Par defaut, toute les paquets de la table FILTER sont acceptés
+iptables -t filter -P INPUT ACCEPT
+iptables -t filter -P OUTPUT ACCEPT
+iptables -t filter -P FORWARD ACCEPT
+
+
+
+# Suppression de toutes les chaînes pré-définies de la table NAT
+iptables -t nat -F
+
+# Suppression de toutes les chaînes utilisateur de la table NAT
+iptables -t nat -X
+
+# Par defaut, toute les paquets de la table NAT sont acceptés
+iptables -t nat -P PREROUTING ACCEPT
+iptables -t nat -P OUTPUT ACCEPT
+iptables -t nat -P POSTROUTING ACCEPT
+
+
+
+# Suppression de toutes les chaînes pré-définies de la table MANGLE
+iptables -t mangle -F
+
+# Suppression de toutes les chaînes utilisateur de la table MANGLE
+iptables -t mangle -X
+
+# Par defaut, toute les paquets de la table MANGLE sont acceptés
+iptables -t mangle -P PREROUTING ACCEPT
+iptables -t mangle -P INPUT ACCEPT
+iptables -t mangle -P OUTPUT ACCEPT
+iptables -t mangle -P FORWARD ACCEPT
+iptables -t mangle -P POSTROUTING ACCEPT
+
+
+# Supprime du NAT dans le kernel
+# OK pour tout accepter, mais il ne faut pas rigoler quand même !
+echo 0 > /proc/sys/net/ipv4/ip_forward
+
+
+# Desactive les options anti-spoofing du kernel
+for Filter in /proc/sys/net/ipv4/conf/*/rp_filter; do
+  echo 0 > $Filter
+done
+
+# Desactive les options anti-ping du kernel
+echo 0 > /proc/sys/net/ipv4/icmp_echo_ignore_all
+echo 0 > /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts
+echo 0 > /proc/sys/net/ipv4/icmp_ignore_bogus_error_responses
