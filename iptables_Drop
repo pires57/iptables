@@ -1,0 +1,68 @@
+#!/bin/sh
+#
+###############################################################################
+# NOM: iptable-extrem-drop.sh
+#
+# COMMENTAIRE : Interdit toutes les connexions réseaux
+# 
+# Ce script fait partie du document :
+#        "Firewall et sécurité d'un réseau personnel sous Linux"
+#        http://olivieraj.free.fr/fr/linux/information/firewall/
+#
+# Auteur: Olivier ALLARD-JACQUIN (http://olivieraj.free.fr/)
+# Créé le: 2003/07/02                     Dernière modification le : 2003/07/19
+###############################################################################
+
+# Suppression de toutes les chaînes pré-définies de la table FILTER
+iptables -t filter -F
+
+# Suppression de toutes les chaînes utilisateur de la table FILTER
+iptables -t filter -X
+
+# Par defaut, toute les paquets de la table FILTER sont détruits
+iptables -t filter -P INPUT DROP
+iptables -t filter -P OUTPUT DROP
+iptables -t filter -P FORWARD DROP
+
+
+
+# Suppression de toutes les chaînes pré-définies de la table NAT
+iptables -t nat -F
+
+# Suppression de toutes les chaînes utilisateur de la table NAT
+iptables -t nat -X
+
+# Par defaut, toute les paquets de la table NAT sont détruits
+iptables -t nat -P PREROUTING DROP
+iptables -t nat -P OUTPUT DROP
+iptables -t nat -P POSTROUTING DROP
+
+
+
+# Suppression de toutes les chaînes pré-définies de la table MANGLE
+iptables -t mangle -F
+
+# Suppression de toutes les chaînes utilisateur de la table MANGLE
+iptables -t mangle -X
+
+# Par defaut, toute les paquets de la table MANGLE sont détruits
+iptables -t mangle -P PREROUTING DROP
+iptables -t mangle -P INPUT DROP
+iptables -t mangle -P OUTPUT DROP
+iptables -t mangle -P FORWARD DROP
+iptables -t mangle -P POSTROUTING DROP
+
+
+# Supprime du NAT dans le kernel
+echo 0 > /proc/sys/net/ipv4/ip_forward
+
+
+# Active les options anti-spoofing du kernel
+for Filter in /proc/sys/net/ipv4/conf/*/rp_filter; do
+  echo 1 > $Filter
+done
+
+# Active les options anti-ping du kernel
+echo 1 > /proc/sys/net/ipv4/icmp_echo_ignore_all
+echo 1 > /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts
+echo 1 > /proc/sys/net/ipv4/icmp_ignore_bogus_error_responses
