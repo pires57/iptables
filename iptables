@@ -44,6 +44,7 @@ initNetfilter() {
 	
 	echo "+ Desactivation du NAT"
 	echo 0 > /proc/sys/net/ipv4/ip_forward
+	####################################################################################################
 }
 
 ipMask() {
@@ -62,6 +63,7 @@ ipMask() {
 	iptables -t nat    -A POSTROUTING               -o $Interface_Internet -s 172.16.0.0/16 -d 192.168.1.0/24 -p all -j MASQUERADE
 	
 	echo 1 > /proc/sys/net/ipv4/ip_forward
+	####################################################################################################
 }
 
 start() {
