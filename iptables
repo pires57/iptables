@@ -3,7 +3,7 @@
 #Met enplace un fire wall et partage de connexion internet.
 #A déplacer dans : /etc/init.d/
 #chmod +x /etc/init.d/iptables
-#update-rc.d iptables start 99 2 .stop 00 2 0 1 6 .
+#update-rc.d iptables start 99 2 . stop 00 2 0 1 6 .
 
 #Interface du reseau local
 Interface_Local=eth0;
