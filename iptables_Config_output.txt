@@ -1,0 +1,30 @@
+Chain INPUT (policy DROP)
+target     prot opt source               destination         
+ACCEPT     all  --  anywhere             anywhere            
+ACCEPT     all  --  172.16.0.0/16        172.16.0.1          
+ACCEPT     all  --  172.16.255.255       172.16.0.1          
+ACCEPT     all  --  192.168.1.0/24       livebox-1.home       state RELATED,ESTABLISHED
+ACCEPT     tcp  --  anywhere             anywhere             tcp dpt:domain
+ACCEPT     udp  --  anywhere             anywhere             udp dpt:domain
+
+Chain FORWARD (policy DROP)
+target     prot opt source               destination         
+ACCEPT     tcp  --  192.168.1.0/24       172.16.0.0/16        tcp dpt:http state NEW,RELATED,ESTABLISHED
+ACCEPT     tcp  --  172.16.0.0/16        192.168.1.0/24       tcp spt:http state RELATED,ESTABLISHED
+ACCEPT     udp  --  192.168.1.0/24       172.16.0.0/16        udp dpt:http state NEW,RELATED,ESTABLISHED
+ACCEPT     udp  --  172.16.0.0/16        192.168.1.0/24       udp spt:http state RELATED,ESTABLISHED
+ACCEPT     tcp  --  192.168.1.0/24       172.16.0.0/16        tcp dpt:https state NEW,RELATED,ESTABLISHED
+ACCEPT     tcp  --  172.16.0.0/16        192.168.1.0/24       tcp spt:https state RELATED,ESTABLISHED
+ACCEPT     udp  --  192.168.1.0/24       172.16.0.0/16        udp dpt:https state NEW,RELATED,ESTABLISHED
+ACCEPT     udp  --  172.16.0.0/16        192.168.1.0/24       udp spt:https state RELATED,ESTABLISHED
+ACCEPT     all  --  172.16.0.0/16        192.168.1.0/24       state NEW,RELATED,ESTABLISHED
+ACCEPT     all  --  192.168.1.0/24       172.16.0.0/16        state RELATED,ESTABLISHED
+
+Chain OUTPUT (policy DROP)
+target     prot opt source               destination         
+ACCEPT     all  --  anywhere             anywhere            
+ACCEPT     all  --  172.16.0.1           172.16.0.0/16       
+ACCEPT     all  --  172.16.0.1           172.16.255.255      
+ACCEPT     all  --  livebox-1.home       192.168.1.0/24       state NEW,RELATED,ESTABLISHED
+ACCEPT     tcp  --  anywhere             anywhere             tcp dpt:domain
+ACCEPT     udp  --  anywhere             anywhere             udp dpt:domain
