@@ -46,6 +46,24 @@ initNetfilter() {
 	echo 0 > /proc/sys/net/ipv4/ip_forward
 }
 
+ipMask() {
+	#####################################################################################################
+	# Met en place le masquage ip
+	#####################################################################################################
+	echo "Met en place le masquage ip (l'IP masquerading)"
+	
+	modprobe iptable_nat
+	modprobe ip_nat_ftp
+	modprobe ip_nat_irc
+	
+	iptables -t filter -A FORWARD -i $Interface_Local -o $Interface_Internet -s 172.16.0.0/16 -d 192.168.1.0/24 -p all -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+	iptables -t filter -A FORWARD -i $Interface_Internet -o $Interface_Local -s 192.168.1.0/24 -d 172.16.0.0/16 -p all -m state --state ESTABLISHED,RELATED -j ACCEPT
+	
+	iptables -t nat    -A POSTROUTING               -o $Interface_Internet -s 172.16.0.0/16 -d 192.168.1.0/24 -p all -j MASQUERADE
+	
+	echo 1 > /proc/sys/net/ipv4/ip_forward
+}
+
 start() {
 	
 	initNetfilter
@@ -106,48 +124,14 @@ start() {
 	iptables -t nat    -A POSTROUTING               -o $Interface_Local -s 192.168.1.0/24 -d 172.16.0.10      -p tcp --dport 443 -j SNAT --to-source 172.16.0.10
 	iptables -t nat    -A PREROUTING                -i $Interface_Internet -s 192.168.1.0/24 -d 192.168.1.50      -p udp --dport 443 -j DNAT --to-destination 172.16.0.10
 	iptables -t nat    -A POSTROUTING               -o $Interface_Local -s 192.168.1.0/24 -d 172.16.0.10      -p udp --dport 443 -j SNAT --to-source 172.16.0.10
-	
-	echo 1 > /proc/sys/net/ipv4/ip_forward
 	#####################################################################################################
 	
-	
-	#####################################################################################################
-	# Met en place le masquage ip
-	#####################################################################################################
-	echo "Met en place le masquage ip (l'IP masquerading)"
-	
-	modprobe iptable_nat
-	modprobe ip_nat_ftp
-	modprobe ip_nat_irc
-	
-	iptables -t filter -A FORWARD -i $Interface_Local -o $Interface_Internet -s 172.16.0.0/16 -d 192.168.1.0/24 -p all -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
-	iptables -t filter -A FORWARD -i $Interface_Internet -o $Interface_Local -s 192.168.1.0/24 -d 172.16.0.0/16 -p all -m state --state ESTABLISHED,RELATED -j ACCEPT
-	
-	iptables -t nat    -A POSTROUTING               -o $Interface_Internet -s 172.16.0.0/16 -d 192.168.1.0/24 -p all -j MASQUERADE
-	
-	echo 1 > /proc/sys/net/ipv4/ip_forward
+	ipMask
 }
 
 stop() {
 	
-	initNetfilter
-	
-	echo "stop ip_forward"
-	echo 0 >/proc/sys/net/ipv4/ip_forward
 	echo "Autorise toute les connexions"
-	
-	###############################################################################
-	# NOM: iptable-extrem-accept.sh
-	#
-	# COMMENTAIRE : Autorise toutes les connexions réseaux
-	# 
-	# Ce script fait partie du document :
-	#        "Firewall et sécurité d'un réseau personnel sous Linux"
-	#        http://olivieraj.free.fr/fr/linux/information/firewall/
-	#
-	# Auteur: Olivier ALLARD-JACQUIN (http://olivieraj.free.fr/)
-	# Créé le: 2003/07/02                     Dernière modification le : 2003/07/19
-	###############################################################################
 	
 	# Suppression de toutes les chaînes pré-définies de la table FILTER
 	iptables -t filter -F
@@ -186,6 +170,7 @@ stop() {
 	iptables -t mangle -P FORWARD ACCEPT
 	iptables -t mangle -P POSTROUTING ACCEPT
 	
+	ipMask
 	
 	# Desactive les options anti-spoofing du kernel
 	for Filter in /proc/sys/net/ipv4/conf/*/rp_filter; do
