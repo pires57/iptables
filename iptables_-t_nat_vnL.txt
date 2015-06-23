@@ -1,0 +1,20 @@
+Chain PREROUTING (policy ACCEPT 96 packets, 8024 bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+    0     0 DNAT       tcp  --  eth1   *       192.168.1.0/24       192.168.1.50         tcp dpt:80 to:172.16.0.10
+    0     0 DNAT       udp  --  eth1   *       192.168.1.0/24       192.168.1.50         udp dpt:80 to:172.16.0.10
+    0     0 DNAT       tcp  --  eth1   *       192.168.1.0/24       192.168.1.50         tcp dpt:443 to:172.16.0.10
+    0     0 DNAT       udp  --  eth1   *       192.168.1.0/24       192.168.1.50         udp dpt:443 to:172.16.0.10
+
+Chain INPUT (policy ACCEPT 7 packets, 486 bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain OUTPUT (policy ACCEPT 32 packets, 2232 bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain POSTROUTING (policy ACCEPT 32 packets, 2232 bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+    0     0 SNAT       tcp  --  *      eth0    192.168.1.0/24       172.16.0.10          tcp dpt:80 to:172.16.0.10
+    0     0 SNAT       udp  --  *      eth0    192.168.1.0/24       172.16.0.10          udp dpt:80 to:172.16.0.10
+    0     0 SNAT       tcp  --  *      eth0    192.168.1.0/24       172.16.0.10          tcp dpt:443 to:172.16.0.10
+    0     0 SNAT       udp  --  *      eth0    192.168.1.0/24       172.16.0.10          udp dpt:443 to:172.16.0.10
+    0     0 MASQUERADE  all  --  *      eth1    192.168.10.0/24      0.0.0.0/0           
