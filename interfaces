@@ -1,0 +1,24 @@
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+# RaspberryPi server web ( MAC :9C   172.16.50.0/24 )
+auto eth2
+iface eth2 inet static
+address 172.16.50.1
+netmask 255.255.255.0
+
+# Local Area Network ( MAC :7b   192.168.1.0/24 )
+auto eth1
+iface eth1 inet dhcp
+# 192.168.1.50 DHCP static address
+
+# LAN network ( MAC :8f   172.16.0.0/16)
+auto eth0
+iface eth0 inet static
+address 172.16.0.1
+netmask 255.255.0.0
+gateway 192.168.1.1
