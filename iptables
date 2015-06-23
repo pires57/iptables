@@ -59,8 +59,11 @@ ipMask() {
 	modprobe ip_nat_ftp
 	modprobe ip_nat_irc
 	
-	iptables -t filter -A FORWARD -i $Interface_Local -o $Interface_Internet -s 172.16.0.0/16 -d 192.168.1.0/24 -p all -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
-	iptables -t filter -A FORWARD -i $Interface_Internet -o $Interface_Local -s 192.168.1.0/24 -d 172.16.0.0/16 -p all -m state --state ESTABLISHED,RELATED -j ACCEPT
+	#iptables -t filter -A FORWARD -i $Interface_Local -o $Interface_Internet -s 172.16.0.0/16 -d 192.168.1.0/24 -p all -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+	#iptables -t filter -A FORWARD -i $Interface_Internet -o $Interface_Local -s 192.168.1.0/24 -d 172.16.0.0/16 -p all -m state --state ESTABLISHED,RELATED -j ACCEPT
+	
+	iptables -t filter -A FORWARD -i $Interface_Local -o $Interface_Internet -s 172.16.0.0/16 -p all -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+	iptables -t filter -A FORWARD -i $Interface_Internet -o $Interface_Local -s 192.168.1.0/24 -p all -m state --state ESTABLISHED,RELATED -j ACCEPT
 	
 	iptables -t nat -A POSTROUTING -o $Interface_Internet -s 172.16.0.0/16 -p all -j MASQUERADE
 	
