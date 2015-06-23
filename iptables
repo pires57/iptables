@@ -9,6 +9,8 @@
 Interface_Local=eth0;
 #Interface du reseau d'acces à internet (livebox)
 Interface_Internet=eth1;
+#Interface du serveur web
+Interface_ServerWeb=eth2; #pas encore configurer
 
 initNetfilter() {
 	####################################################################################################
