@@ -32,8 +32,10 @@ start() {
 	# Autoriser toutes les réponses entrantes si elles correspondent à une requête en cours
 	iptables -t filter -A FORWARD -i $NET -o $LOC -m state --state ESTABLISHED,RELATED -j ACCEPT
 
-	iptables -A INPUT -p tcp --dport 53 -j ACCEPT
-	iptables -A INPUT -p udp --dport 53 -j ACCEPT
+	iptables -t filter -A OUTPUT -p tcp --dport 53 -j ACCEPT
+	iptables -t filter -A OUTPUT -p udp --dport 53 -j ACCEPT
+	iptables -t filter -A INPUT -p tcp --dport 53 -j ACCEPT
+	iptables -t filter -A INPUT -p udp --dport 53 -j ACCEPT
 
 	echo 1 > /proc/sys/net/ipv4/ip_forward
 }
