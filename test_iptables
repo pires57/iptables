@@ -1,233 +1,59 @@
-###############################################################################
-# NOM: iptable-final-1.sh
-#
-# COMMENTAIRE : Synthèse d'utilisation de ce qui a été vu dans le document
-#               (chapitre III-10-3)
-# 
-# Ce script fait partie du document :
-#        "Firewall et sécurité d'un réseau personnel sous Linux"
-#        http://olivieraj.free.fr/fr/linux/information/firewall/
-#
-# Auteur: Olivier ALLARD-JACQUIN (http://olivieraj.free.fr/)
-# Créé le : 2003/07/09                    Dernière modification le : 2003/07/09
-###############################################################################
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          iptables
+# Required-Start:    $local_fs
+# Required-Stop:
+# Default-Start:     2
+# Default-Stop:
+# Short-Description: Pare-feu et partage de connexion internet.
+### END INIT INFO
 
+LOC="eth0" # Réseau local
+NET="eth1" # Accès à Internet (Livebox)
+SRV="eth2" # Serveur web
 
-###############################################################################
-# Variables globales
-###############################################################################
+NETWORK_LOC="172.16.0.0/16"
+IP_NET="192.168.1.50"
+SERVEUR_INTERNE="172.16.0.10"
 
-# Paramètrage du réseau local (LAN = Local Area Network)
-LAN_INTERFACE=eth0            ; # Interface réseau interne
-LAN_IP=172.16.0.1            ; # Adresse réseau interne
-LAN_NETWORK=172.16.0.0/16    ; # Réseau interne
-LAN_BROADCAST=172.16.255.255   ; # Adresse de broadcast interne
+start() {
+	iptables -F
+	iptables -P FORWARD DROP
+	iptables -t nat -F
+	
+	# Rediriger les connexions HTTP et HTTPS entrantes vers le serveur interne
+	iptables -t nat -A PREROUTING -i $NET -d $IP_NET -p tcp -m multiport --dports 80,443 -j DNAT --to-destination $SERVEUR_INTERNE
+	iptables -A FORWARD -i $NET -d $IP_SERVEUR_INTERNE -p tcp -m multiport --dports 80,443 -j ACCEPT
+	
+	# Autoriser toutes les requêtes sortantes, du réseau local vers Internet
+	iptables -t nat -A POSTROUTING -o $NET -s $NETWORK_LOC -j SNAT --to-source $IP_NET
+	iptables -t filter -A FORWARD -i $LOC -o $NET -j ACCEPT
+	
+	# Autoriser toutes les réponses entrantes si elles correspondent à une requête en cours
+	iptables -t filter -A FORWARD -i $NET -o $LOC -m state --state ESTABLISHED,RELATED -j ACCEPT
 
-# Paramètrage de la connexion Internet (WAN = Wild Area Network = Réseau Large)
-WAN_INTERFACE=eth1            ; # Interface réseau externe (Internet)
-WAN_IP=192.168.1.50               ; # Adresse réseau externe (Internet)
-WAN_NETWORK=192.168.1.0/24        ; # Réseau externe (Internet)
+	echo 1 > /proc/sys/net/ipv4/ip_forward
+}
 
-# REMARQUE:
-# Si vous utiliser une connexion par modem (RTC/RNIS/ADSL) pour vous connecter à Internet
-# utilisez les variables ci-dessous. Elle permettrons à ce script de détecter
-# automatiquement votre adresse IP Internet
-#WAN_INTERFACE=eth1            ; # Interface modem
-#WAN_IP=`/sbin/ifconfig | grep "P-t-P" | sed "s/^[: a-z]*\([.0-9]*\).*/\1/g"`  ; # Récupère l'adresse réseau externe (Internet)
-#WAN_NETWORK=0.0.0.0/0
+stop() {
+	iptables -F
+	iptables -P FORWARD ACCEPT
+	iptables -t nat -F
+	echo 0 > /proc/sys/net/ipv4/ip_forward
+}
 
-# Paramètrage de l'IP masquerading
-#   NAT=0   <=> Le NAT N'est PAS autorisé 
-#   NAT=1   <=> Le NAT est autorisé 
-NAT=1
-
-# Paramètrage du port forwarding
-#   PF=0   <=> Le port forwarding N'est PAS autorisé 
-#   PF=1   <=> Le port forwarding est autorisé 
-PF=1
-PF_PROTO=tcp         ; # Type de frame
-PF_PORT=80           ; # Port ouvert sur le WAN
-PF_IP=172.16.0.10    ; # Adresse IP du serveur sur le LAN
-
-# Paramétrage du LOG
-#   LOG=LOG_IN      <=> On log toutes les tentatives d'intrusions non autorisées
-#   LOG=LOG_OUT     <=> On log toutes les tentatives de sortie non autorisées
-#   LOG=LOG_IN-OUT  <=> On log toutes les tentatives d'entrées et sorties non autorisées
-#   LOG=ULOG_IN     <=> On log (avec ULOG) toutes les tentatives d'intrusions non autorisée
-#   LOG=ULOG_OUT    <=> On log (avec ULOG) toutes les tentatives de sorties non autorisées
-#   LOG=ULOG_IN-OUT <=> On log (avec ULOG) toutes les tentatives d'entrées et sorties non autorisées
-#   LOG=NONE        <=> On ne log RIEN du tout
-LOG=ULOG_IN-OUT
-LOG_PREFIX=Netfilter
-
-
-###############################################################################
-###############################################################################
-# A PARTIR DE CE POINT, VOUS N'AVEZ PLUS BESOIN DE CONFIGURER CE SCRIPT!!!
-###############################################################################
-###############################################################################
-
-
-###############################################################################
-# Initialisation de Netfilter
-###############################################################################
-
-# Initialise la table Filter (par défaut tout les échanges sont refusés)
-echo "+ Initialisation de la table Filter"
-iptables -t filter -F
-iptables -t filter -X 
-iptables -t filter -P INPUT   DROP
-iptables -t filter -P FORWARD DROP
-iptables -t filter -P OUTPUT  DROP
-
-# Initialise la table NAT (par défaut tout les échanges sont activés)
-echo "+ Initialisation de la table NAT"
-iptables -t nat -F
-iptables -t nat -X 
-iptables -t nat -P PREROUTING  ACCEPT
-iptables -t nat -P OUTPUT      ACCEPT
-iptables -t nat -P POSTROUTING ACCEPT
-
-# Initialise la table Mangle (par défaut tout les échanges sont activés)
-echo "+ Initialisation de la table Mangle"
-iptables -t mangle -F
-iptables -t mangle -X 
-iptables -t mangle -P PREROUTING  ACCEPT
-iptables -t mangle -P INPUT       ACCEPT
-iptables -t mangle -P FORWARD     ACCEPT
-iptables -t mangle -P OUTPUT      ACCEPT
-iptables -t mangle -P POSTROUTING ACCEPT
-
-echo "+ Desactivation du NAT"
-echo 0 > /proc/sys/net/ipv4/ip_forward
-
-###############################################################################
-# Règles du localhost
-# On NE fait PAS de restriction aux adresses IP source / destination 127.0.0.0
-###############################################################################
-
-echo "+ Règles du localhost"
-iptables -t filter -A OUTPUT -o lo -p all -j ACCEPT
-iptables -t filter -A INPUT  -i lo -p all -j ACCEPT
-
-
-###############################################################################
-# Règles de conexion au reseau local
-# Tout est autorisé
-###############################################################################
-
-echo "+ Règles du réseau local ($LAN_INTERFACE - $LAN_IP - $LAN_NETWORK)"
-# Connexions firewall <-> réseau
-iptables -t filter -A OUTPUT -o $LAN_INTERFACE -s $LAN_IP -d $LAN_NETWORK -p all -j ACCEPT
-iptables -t filter -A INPUT  -i $LAN_INTERFACE -s $LAN_NETWORK -d $LAN_IP -p all -j ACCEPT
-    
-# Connexions firewall <-> broadcast réseau
-iptables -t filter -A OUTPUT -o $LAN_INTERFACE -s $LAN_IP -d $LAN_BROADCAST -p all -j ACCEPT
-iptables -t filter -A INPUT  -i $LAN_INTERFACE -s $LAN_BROADCAST -d $LAN_IP -p all -j ACCEPT
-
-
-###############################################################################
-# Règles de connexion à Internet
-# Seul les connexions initialisés par la machine sont autorisées
-# C'est le suivit de connexion
-###############################################################################
-
-# Chargement des modules pour le suivit de connexion
-modprobe ip_conntrack
-modprobe ip_conntrack_ftp
-modprobe ip_conntrack_irc
-
-echo "+ Règles pour Internet ($WAN_INTERFACE - $WAN_IP - $WAN_NETWORK)"
-iptables -t filter -A OUTPUT -o $WAN_INTERFACE -s $WAN_IP -d $WAN_NETWORK -p all -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
-iptables -t filter -A INPUT  -i $WAN_INTERFACE -s $WAN_NETWORK -d $WAN_IP -p all -m state --state RELATED,ESTABLISHED -j ACCEPT
-
-
-###############################################################################
-# Règles pour le port forwarding
-# Pour que le port forwarding soit activé, il faut la variable "$PF" soit à "1"
-###############################################################################
-
-if [ "$PF" == "1" ]; then
-  # Chargement des modules pour le port forwarding
-  modprobe iptable_nat
-
-  echo "+ Autorise le port forwardong de $WAN_IP:$PF_PORT -> $PF_IP:$PF_PORT"
-  iptables -t filter -A FORWARD -i $WAN_INTERFACE -o $LAN_INTERFACE -s $WAN_NETWORK -d $LAN_NETWORK -p $PF_PROTO --dport $PF_PORT -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
-  iptables -t filter -A FORWARD -i $LAN_INTERFACE -o $WAN_INTERFACE -s $LAN_NETWORK -d $WAN_NETWORK -p $PF_PROTO --sport $PF_PORT -m state --state ESTABLISHED,RELATED -j ACCEPT
-
-  iptables -t nat    -A PREROUTING                -i $WAN_INTERFACE -s $WAN_NETWORK -d $WAN_IP      -p $PF_PROTO --dport $PF_PORT -j DNAT --to-destination $PF_IP
-  iptables -t nat    -A POSTROUTING               -o $LAN_INTERFACE -s $WAN_NETWORK -d $PF_IP       -p $PF_PROTO --dport $PF_PORT -j SNAT --to-source $LAN_IP
-
-  echo 1 > /proc/sys/net/ipv4/ip_forward
-
-else
-  echo "+ Le port forwarding N'est PAS autorisé"
-  if [ "$NAT" == "0" ]; then
-    echo 0 > /proc/sys/net/ipv4/ip_forward
-  fi
-fi
-
-
-###############################################################################
-# Règles pour l'IP masquerading
-# Pour que le IP masquerading soit activé, il faut la variable "$NAT" soit à "1"
-###############################################################################
-
-if [ "$NAT" == "1" ]; then
-  # Chargement des modules pour l'IP masquerading
-  modprobe iptable_nat
-  modprobe ip_nat_ftp
-  modprobe ip_nat_irc
-
-  echo "+ Autorise l'IP masquerading de $LAN_NETWORK -> $WAN_NETWORK"
-  iptables -t filter -A FORWARD -i $LAN_INTERFACE -o $WAN_INTERFACE -s $LAN_NETWORK -d $WAN_NETWORK -p all -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
-  iptables -t filter -A FORWARD -i $WAN_INTERFACE -o $LAN_INTERFACE -s $WAN_NETWORK -d $LAN_NETWORK -p all -m state --state ESTABLISHED,RELATED -j ACCEPT
-
-  iptables -t nat    -A POSTROUTING               -o $WAN_INTERFACE -s $LAN_NETWORK -d $WAN_NETWORK -p all -j MASQUERADE
-
-  echo 1 > /proc/sys/net/ipv4/ip_forward
-
-else
-  echo "+ L'IP masquerading N'est PAS autorisé"
-  echo 0 > /proc/sys/net/ipv4/ip_forward
-fi
-
-
-###############################################################################
-# Règles pour le log
-###############################################################################
-
-echo "+ Definition des logs ($LOG)"
-case "$LOG" in
-  LOG_IN)
-    iptables -t filter -A INPUT  -p all -j LOG --log-prefix $LOG_PREFIX
-    ;;
-
-  LOG_OUT)
-    iptables -t filter -A OUTPUT -p all -j LOG --log-prefix $LOG_PREFIX
-    ;;
-
-  LOG_IN-OUT)
-    iptables -t filter -A INPUT  -p all -j LOG --log-prefix $LOG_PREFIX
-    iptables -t filter -A OUTPUT -p all -j LOG --log-prefix $LOG_PREFIX
-    ;;
-
-  ULOG_IN)
-    iptables -t filter -A INPUT  -p all -j ULOG --ulog-prefix $LOG_PREFIX
-    ;;
-
-  ULOG_OUT)
-    iptables -t filter -A OUTPUT -p all -j ULOG --ulog-prefix $LOG_PREFIX
-    ;;
-
-  ULOG_IN-OUT)
-    iptables -t filter -A INPUT  -p all -j ULOG --ulog-prefix $LOG_PREFIX
-    iptables -t filter -A OUTPUT -p all -j ULOG --ulog-prefix $LOG_PREFIX
-    ;;
-esac  
-
-echo "+ ------====== SCRIPT TERMINE! ======------"
-echo "+ Pour afficher votre configuration Netfilter, lancez:"
-echo " - 'iptables -L -n -v'           pour la table 'Filter'"
-echo " - 'iptables -L -n -v -t nat'    pour la table 'NAT'"
-echo " - 'iptables -L -n -v -t mangle' pour la table 'Mangle'"
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		stop
+		start
+		;;
+	*)
+		echo "Usage $0 {start|stop|restart}"
+		exit 1
+esac
