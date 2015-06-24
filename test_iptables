@@ -22,28 +22,40 @@ start() {
 	iptables -t nat -F
 	
 	# Rediriger les connexions HTTP et HTTPS entrantes vers le serveur interne
+	echo "Rediriger les connexions HTTP et HTTPS entrantes vers le serveur interne"
 	#iptables -t nat -A PREROUTING -i $NET -d $IP_NET -p tcp -m multiport --dports 80,443 -j DNAT --to-destination $SERVEUR_INTERNE
 	#iptables -A FORWARD -i $NET -d $IP_SERVEUR_INTERNE -p tcp -m multiport --dports 80,443 -j ACCEPT
 	
 	# Autoriser toutes les requêtes sortantes, du réseau local vers Internet
+	echo "Autoriser toutes les requêtes sortantes, du réseau local vers Internet"
 	iptables -t nat -A POSTROUTING -o $NET -s $NETWORK_LOC -j SNAT --to-source $IP_NET
 	iptables -t filter -A FORWARD -i $LOC -o $NET -j ACCEPT
 	
 	# Autoriser toutes les réponses entrantes si elles correspondent à une requête en cours
+	echo "Autoriser toutes les réponses entrantes si elles correspondent à une requête en cours"
 	iptables -t filter -A FORWARD -i $NET -o $LOC -m state --state ESTABLISHED,RELATED -j ACCEPT
 
+	# Autoriser le servie DNS
+	echo "Autoriser le servie DNS"
 	iptables -t filter -A OUTPUT -p tcp --dport 53 -j ACCEPT
 	iptables -t filter -A OUTPUT -p udp --dport 53 -j ACCEPT
 	iptables -t filter -A INPUT -p tcp --dport 53 -j ACCEPT
 	iptables -t filter -A INPUT -p udp --dport 53 -j ACCEPT
 
+	# Activer l'ip_forward
+	echo "Activer l'ip_forward"
 	echo 1 > /proc/sys/net/ipv4/ip_forward
 }
 
 stop() {
+	# Effacer les règles précedentes
+	echo "Effacer les règles précedentes"
 	iptables -F
 	iptables -P FORWARD ACCEPT
 	iptables -t nat -F
+	
+	# Desactiver l'ip_forward
+	echo "Desactiver l'ip_forward"
 	echo 0 > /proc/sys/net/ipv4/ip_forward
 }
 
