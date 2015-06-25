@@ -129,6 +129,11 @@ echo "Partage de connexion"
 # connectée à Internet.
 iptables -t nat -A POSTROUTING -o eth1 -j MASQUERADE
 
+########################
+# Service DNS
+########################
+echo "Mise en place du service DNS"
+echo 'XPROXY 127.0.0.1' > /etc/resolv.conf
 
 ########################
 # Redirections de port #
