@@ -18,7 +18,7 @@ SERVEUR_INTERNE="172.16.0.10"
 
 start() {
 	iptables -F
-	iptables -P FORWARD DROP
+	iptables -P FORWARD ACCEPT
 	iptables -t nat -F
 	
 	# Rediriger les connexions HTTP et HTTPS entrantes vers le serveur interne
