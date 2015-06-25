@@ -50,6 +50,9 @@ iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
 # soit joignable de l'extérieur
 iptables -A INPUT -p tcp --dport ssh -j ACCEPT
 
+# Décommentez la ligne suivante pour que la connexion skype
+iptables -A INPUT -p tcp --dport 16019 -j ACCEPT
+
 # Décommentez la ligne suivante pour que le serveur de courrier éventuel soit
 # joignable de l'extérieur. Laissez bien smtps et submission si vous avez
 # activé les services SMTPS et soumission de messages… L'option --dports
