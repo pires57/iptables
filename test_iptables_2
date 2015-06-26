@@ -131,6 +131,7 @@ echo "Partage de connexion"
 # routeur NAT et remplacez « eth0 » par le nom de l'interface
 # connectée à Internet.
 iptables -t nat -A POSTROUTING -o eth1 -j MASQUERADE
+iptables -t nat -A POSTROUTING -o eth2 -j MASQUERADE
 
 ########################
 # Service DNS
@@ -147,7 +148,7 @@ echo "Redirections de port"
 # le port 80 de l'interface eth0 soient redirigées à la machine dont
 # l'adresse IPv4 est 192.168.0.3 sur son port 80 (la réponse à la
 # requête sera transférée au client).
-iptables -t nat -A PREROUTING -i eth1 -p tcp --dport 80 -j DNAT --to-destination 172.16.50.1:80
+iptables -t nat -A PREROUTING -i eth1 -p tcp --dport 80 -j DNAT --to-destination 172.16.50.10:80
 
 # Redirection des requettes web versquid
 iptables -t nat -A PREROUTING -i eth0 -s 172.16.0.0/16 -p tcp --dport 80 -j REDIRECT --to-port 3128
