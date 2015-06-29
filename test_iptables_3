@@ -22,12 +22,12 @@ start() {
 	iptables -t nat -F
 	
 	# Rediriger les connexions HTTP et HTTPS entrantes vers le serveur interne
-	echo "Redirection des connexions entrantes (HTTP et HTTPS)  vers le serveur interne"
-	iptables -t nat -A POSTROUTING -o $NET -j MASQUERADE
+	echo "Redirection des connexions entrantes (HTTP) vers le serveur interne"
 	#iptables -t nat -A PREROUTING -i $NET -d $IP_NET -p tcp --dports 80 -j DNAT --to-destination $SERVEUR_INTERNE
 	#iptables -A FORWARD -i $NET -d $SERVEUR_INTERNE -p tcp --dports 80 -j ACCEPT
 	iptables -t nat -A PREROUTING -i $NET -p tcp --dport 80 -j DNAT --to-destination $SERVEUR_INTERNE:80
 	iptables -A FORWARD -i $NET -p tcp --dport 80 -j ACCEPT
+	#iptables -t nat -A POSTROUTING -o $NET -j MASQUERADE
 	
 	# Autoriser toutes les requêtes sortantes, du réseau local vers Internet
 	echo "Autoriser toutes les requêtes sortantes, du réseau local vers Internet"
@@ -43,11 +43,11 @@ start() {
 	echo 1 > /proc/sys/net/ipv4/ip_forward
 	
 	# Autoriser le service DNS
-	echo "Autoriser le service DNS"
-	iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT
-	iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
-	iptables -A INPUT -p tcp --dport 53 -j ACCEPT
-	iptables -A INPUT -p udp --dport 53 -j ACCEPT
+	#echo "Autoriser le service DNS"
+	#iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT
+	#iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
+	#iptables -A INPUT -p tcp --dport 53 -j ACCEPT
+	#iptables -A INPUT -p udp --dport 53 -j ACCEPT
 }
 
 stop() {
