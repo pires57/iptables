@@ -42,8 +42,8 @@ start() {
 	echo "Activer l'ip_forward"
 	echo 1 > /proc/sys/net/ipv4/ip_forward
 	
-	# Autoriser le servie DNS
-	echo "Autoriser le servie DNS"
+	# Autoriser le service DNS
+	echo "Autoriser le service DNS"
 	iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT
 	iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
 	iptables -A INPUT -p tcp --dport 53 -j ACCEPT
