@@ -1,0 +1,76 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          iptables
+# Required-Start:    $local_fs
+# Required-Stop:
+# Default-Start:     2
+# Default-Stop:
+# Short-Description: Pare-feu et partage de connexion internet.
+### END INIT INFO
+
+LOC="eth0" # Réseau local
+NET="eth1" # Accès à Internet (Livebox)
+SRV="eth2" # Serveur web
+
+NETWORK_LOC="172.16.0.0/16"
+IP_NET="192.168.1.50"
+SERVEUR_INTERNE="172.16.0.10"
+
+start() {
+	iptables -F
+	iptables -P FORWARD ACCEPT
+	iptables -t nat -F
+	
+	# Rediriger les connexions HTTP et HTTPS entrantes vers le serveur interne
+	echo "Redirection des connexions entrantes (HTTP et HTTPS)  vers le serveur interne"
+	iptables -t nat -A PREROUTING -i $NET -d $IP_NET -p tcp --dports 80 -j DNAT --to-destination $SERVEUR_INTERNE
+	iptables -A FORWARD -i $NET -d $SERVEUR_INTERNE -p tcp --dports 80 -j ACCEPT
+	
+	# Autoriser toutes les requêtes sortantes, du réseau local vers Internet
+	echo "Autoriser toutes les requêtes sortantes, du réseau local vers Internet"
+	iptables -t nat -A POSTROUTING -o $NET -s $NETWORK_LOC -j SNAT --to-source $IP_NET
+	iptables -t filter -A FORWARD -i $LOC -o $NET -j ACCEPT
+	
+	# Autoriser toutes les réponses entrantes si elles correspondent à une requête en cours
+	echo "Autoriser toutes les réponses entrantes si elles correspondent à une requête en cours"
+	iptables -t filter -A FORWARD -i $NET -o $LOC -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+	# Activer l'ip_forward
+	echo "Activer l'ip_forward"
+	echo 1 > /proc/sys/net/ipv4/ip_forward
+	
+	# Autoriser le servie DNS
+	echo "Autoriser le servie DNS"
+	iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT
+	iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
+	iptables -A INPUT -p tcp --dport 53 -j ACCEPT
+	iptables -A INPUT -p udp --dport 53 -j ACCEPT
+}
+
+stop() {
+	# Effacer les règles précedentes
+	echo "Effacer les règles précedentes"
+	iptables -F
+	iptables -P FORWARD ACCEPT
+	iptables -t nat -F
+	
+	# Desactiver l'ip_forward
+	echo "Desactiver l'ip_forward"
+	echo 0 > /proc/sys/net/ipv4/ip_forward
+}
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		stop
+		start
+		;;
+	*)
+		echo "Usage $0 {start|stop|restart}"
+		exit 1
+esac
