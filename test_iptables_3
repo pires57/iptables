@@ -25,9 +25,11 @@ start() {
 	echo "Redirection des connexions entrantes (HTTP) vers le serveur interne"
 	#iptables -t nat -A PREROUTING -i $NET -d $IP_NET -p tcp --dports 80 -j DNAT --to-destination $SERVEUR_INTERNE
 	#iptables -A FORWARD -i $NET -d $SERVEUR_INTERNE -p tcp --dports 80 -j ACCEPT
-	iptables -t nat -A PREROUTING -i $NET -p tcp --dport 80 -j DNAT --to-destination $SERVEUR_INTERNE:80
-	iptables -A FORWARD -i $NET -p tcp --dport 80 -j ACCEPT
-	#iptables -t nat -A POSTROUTING -o $NET -j MASQUERADE
+	iptables -t nat -A POSTROUTING -o $NET -j MASQUERADE
+	#Redirige les connection HTTP depuis internet vers vers le serveur.
+	iptables -t nat -A PREROUTING -i $NET -p tcp --dport 80 -j DNAT \ --to-destination $SERVEUR_INTERNE:80
+	iptables -t nat -A PREROUTING -i $NET -p tcp --dport 443 -j DNAT \ --to-destination $SERVEUR_INTERNE:443 #si tu as du HTTPS
+	#iptables -A FORWARD -i $NET  -p tcp --dport 80 -j ACCEPT  #inutile, si ta politique par défaut pour forward est ACCEPT
 	
 	# Autoriser toutes les requêtes sortantes, du réseau local vers Internet
 	echo "Autoriser toutes les requêtes sortantes, du réseau local vers Internet"
